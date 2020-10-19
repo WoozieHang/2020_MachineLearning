@@ -1,0 +1,150 @@
+\documentclass{article}
+\usepackage{blindtext}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,bm}
+\usepackage{amstext}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[colorlinks,linkcolor=blue]{hyperref}
+\usepackage{blindtext}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,bm}
+\usepackage{amstext}
+\usepackage{amsfonts}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath}
+\usepackage{changepage}
+\usepackage{graphicx} 
+\usepackage{subfigure}
+\usepackage{color,soul}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel} 
+\usepackage{tikz}
+
+\title{Introduction to Machine Learning\\Homework 2}
+\author{吴紫航 171860659}
+\date{} 
+\begin{document}
+	\maketitle
+	\numberwithin{equation}{section}
+	\section{[30pts] Multi-Label Logistic Regression}
+    In multi-label problem, each instance $\bm{x}$ has a label set $\bm{y}=\{y_1,y_2,...,y_L\}$ and each label $y_i\in\{0,1\}, \forall 1 \leq i \leq L$. Assume the post probability $p(\bm{y} \mid \bm{x})$ follows the conditional independence:\\
+    \begin{equation}
+    p(\bm{y} \mid \bm{x})=\prod\limits_{i=1}^L p(y_i \mid \bm{x}).
+    \end{equation}
+    Please use the logistic regression method to handle the following questions.\\
+    (1) [15pts] Please give the log-likelihood function of your logistic regression model;\\
+解:
+设$\bm{\omega}=(\bm{\omega_1};\bm{\omega_2};\bm{\omega_3};$ ... $;\bm{\omega_L})$\ \ \ \ $\bm{b}=(b_1;b_2;b_3;$ ... $;b_L)$\\
+由对数几率回归\\
+$p(y=1|\bm{x})=\frac{e^{\bm{\omega}^T\bm{x}+b}}{1+e^{\bm{\omega}^T\bm{x}+b}}$\\
+$p(y=0|\bm{x})=\frac{1}{1+e^{\bm{\omega}^T\bm{x}+b}}$\\
+给定数据集$\{(\bm{x_i},\bm{y_i})\}_{i=1}^m$,  log-likelihood function为\\
+$l(\bm{\omega},\bm{b})=\sum\limits_{i=1}^m{ln\ p(\bm{y_i}|\bm{x_i};\bm{\omega},\bm{b})}$\\$=\sum\limits_{i=1}^m{ln\ \prod\limits_{j=1}^L{\ p(y_{ij}|\bm{x_i};\bm{\omega_j},b_j)}}$\\$=\sum\limits_{i=1}^m{\sum\limits_{j=1}^L{ln\ p(y_{ij}|\bm{x_i};\bm{\omega_j},b_j)}}$\\
+为了便于讨论，令$\bm{\beta}=(\bm{\beta_1};\bm{\beta_2};...;\bm{\beta_L}),\bm{\beta_j}=(\bm{\omega_j};b_j),j=1,2,...,L$\\
+$\mathop{\bm{x}}\limits^{\wedge}=(\bm{x},1)$,则$\bm{\omega_j}^{T}\bm{x}+b_j=\bm{\beta_j}\mathop{\bm{x}}\limits^{\wedge}$\\
+再令$p1(\mathop{\bm{x}}\limits^{\wedge};\bm{\beta_j})=p(y_j=1|\mathop{\bm{x}}\limits^{\wedge};\bm{\beta_j})$\ \ 
+$p0(\mathop{\bm{x}}\limits^{\wedge};\bm{\beta_j})=p(y_j=0|\mathop{\bm{x}}\limits^{\wedge};\bm{\beta_j})$\\
+则重写似然项为$p(y_{ij}|\bm{x_i};\bm{\omega_j},b_j)=y_{ij}p1(\mathop{\bm{x_i}}\limits^{\wedge};\bm{\beta_j})+(1-y_{ij})p0(\mathop{\bm{x_i}}\limits^{\wedge};\bm{\beta_j})$\\
+故等价于最小化\\
+$l(\bm{\beta})=\sum\limits_{i=1}^m{\sum\limits_{j=1}^L{(-y_{ij}\bm{\beta_j}^T\mathop{\bm{x_i}}\limits^{\wedge}+ln(1+e^{\bm{\beta_j^T\mathop{\bm{x_i}}\limits^{\wedge}}}))}}$\\
+注：更严格的形式可以考虑，对每个标签取平均值, \\即$l(\bm{\beta})=\frac{1}{L}\sum\limits_{i=1}^m{\sum\limits_{j=1}^L{(-y_{ij}\bm{\beta_j}^T\mathop{\bm{x_i}}\limits^{\wedge}+ln(1+e^{\bm{\beta_j^T\mathop{\bm{x_i}}\limits^{\wedge}}}))}}$
+\\\\
+    (2) [15pts] Please calculate the gradient of your log-likelihood function and show the parameters updating step using gradient descent.\\
+解：由凸优化理论\\
+$\bm{\beta^{*}}=\mathop{arg\ min}\limits_{\bm{\beta}}l(\bm{\beta})$\\
+${\bm{\beta^{t+1}}}=\bm{\beta^{t}}-\gamma\nabla l(\bm{\beta})=\bm{\beta^{t}}+\gamma\sum\limits_{i=1}^m{\sum\limits_{j=1}^L{\mathop{\bm{x_i}}\limits^{\wedge}(y_{ij}-p1(\mathop{\bm{x_i}}\limits^{\wedge};\bm{}))}}$
+
+
+
+
+%\vspace{3cm}
+%
+%
+%	\numberwithin{equation}{section}
+%	\section{[20pts] Linear Discriminant Analysis}
+%	
+%	Suppose we transform the original $\bf X$ to $\hat{\bf Y}$ via linear regression . In detail, let 
+%
+%	\begin{equation*}
+%	\hat{\bf Y} = \bf X(\bf X^{\top} \bf X)^{-1}\bf X^{\top}\bf Y = \bf X\hat{\bf B},
+%	\end{equation*}
+%	where $\bf X$ and $\bf Y$ are the feature and label matrix, respectively.
+%	 Similarly for any input $\mathbf{x}$, we get a transformed vector $\hat{\mathbf{y}} = \hat{\bf B}^{\top}\mathbf{x}$. Show that LDA %using $\hat{\bf Y}$ is identical to LDA in the original space.
+%	
+%	
+%	
+%\vspace{3cm}
+
+
+\numberwithin{equation}{section}
+\section{[70pts] Logistic Regression from scratch  }
+Implementing algorithms is a good way of understanding how they work in-depth. In case that you are not familiar with the pipeline of building a machine learning model, this article can be an example (\href{https://www.jianshu.com/p/ecb89148ed64}{link}).
+
+In this experiment, you are asked to build a classification model on one of UCI data sets, Letter Recognition Data Set
+(\href{https://box.nju.edu.cn/f/0fdece85a4654d8b94c1/?dl=1}{click to download}). In particular, the objective is to identify each of a large number of black-and-white
+rectangular pixel displays as one of the 26 capital letters in the English alphabet. The detailed statistics of this data set is listed in Table~\ref{tab:dataset}. The data set was then randomly split into train set and test set with proportion $7:3$. Also, letters from `A' to `Z' are mapped to digits `1' to `26' respectively as represented in the last column of the provided data set.
+
+
+\begin{table}[!ht]
+    \centering
+    \caption{Statistics of the data set.}
+    \vspace{2mm}
+    \label{tab:dataset}
+    \begin{tabular}{|c|c|c|}
+    \hline
+    Property & Value & Description\\
+    \hline
+        Number of Instances & 20,000 & Rows of the data set\\
+    \hline
+        Number of Features & 17 & Columns of the data set\\
+    \hline
+        Number of classes & 26 & Dimension of the target attribute \\
+    \hline
+    \end{tabular}
+\end{table}
+
+
+In order to build machine learning models, you are supposed to implement Logistic Regression (LR) algorithm which is commonly used in classification tasks. Specifically, in this experiment, you have to adapt the traditional binary class LR method to tackle the multi-class learning problem. 
+
+\begin{enumerate}
+    \item[(1)] [\textbf{10pts}] You are encouraged to implement the code using \emph{Python3} or \emph{Matlab}, implementations in any other programming language will not be graded. Please name the source code file (which contains the main function) as \emph{LR\underline{\hspace{0.5em}}main.py} (for python3) or \emph{LR\underline{\hspace{0.5em}}main.m} (for matlab). Finally, your code needs to print the testing performance on the provided test set once executed.
+
+    \item[(2)] [\textbf{30pts}] Functions required to implement:
+    \begin{itemize}
+        \item Implement LR algorithm using gradient descent or Newton's method.
+        \item Incorporate One-vs-Rest (OvR) strategy to tackle multi-class classification problem.
+    \end{itemize}
+    \item[(3)] [\textbf{30pts}] Explain implementation details in your submitted report (source code should not be included in your PDF report), including optimization details and hyper-parameter settings, etc. Also, testing performance with respect to Accuracy, Precision, Recall, and $F_1$ score should be reported following the form of Table 2.
+\end{enumerate}
+
+\begin{table}[h]
+    \centering
+     \caption{Performance of your implementation on test set.}
+     \vspace{2mm}
+    \label{tab:my_label}
+    \begin{tabular}{|c|c|}
+       \hline
+       Performance Metric & Value (\%) \\
+       \hline
+       accuracy & 00.00 \\
+       \hline
+       micro Precision  & 00.00\\
+       \hline
+       micro Recall & 00.00\\
+       \hline
+       micro $F_1$ & 00.00\\
+       \hline
+       macro Precision  & 00.00\\
+       \hline
+       macro Recall & 00.00\\
+       \hline
+       macro $F_1$ & 00.00\\
+       \hline
+    \end{tabular}
+
+\end{table}
+
+\textbf{NOTE:} Any off-the-shelf implementations of LR or optimization methods are \textbf{NOT ALLOWED} to use. When submitting your code and report, all files should be placed in the same directory (without any sub-directory).
+\\\\注:详细过程见报告report.pdf和代码LR\_main.py\\
+\end{document}
