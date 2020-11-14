@@ -115,7 +115,7 @@
 		\end{figure}
 	\\
 	2) 解：
-		对于没有隐层、且只有线性单元的神经网络，只能解决线性可分问题。例如异或这类非线性可分问题，学习过程将会来回震荡，无法收敛。\\
+		不一定。对于没有隐层、且只有线性单元的神经网络，只能解决线性可分问题。例如异或这类非线性可分问题，必须要有隐藏层神经元，否则学习过程将会来回震荡，无法收敛。\\
 	\\3) 解：\\
 	分析:\\Logistic regression可以看作隐层只有一个节点的神经网络,该节点的激活函数为sigmod函数。输出层激活函数是一个阶跃函数，即大于0就会通过阶跃函数激活，否则输出不激活。从而实现二分类。\\\\
 	方法:\\由此，对于题目给定的神经网络结构(图3)，我们将隐层的一个节点的激活函数设置为sigmod函数（即logistic function），隐层另一个节点的激活函数为置零函数（始终取常数0，显然属于linear function）。输出层的输出节点的激活函数为阶跃函数（threshold function）\\\\
@@ -134,24 +134,9 @@
 	
 	\begin{enumerate}
 		    \item[(1)] [5 pts] You are encouraged to implement the code using \emph{Python3}, implementations in any other programming language will not be judged. Please name the source file (which contains the main function) as \emph{CNN\underline{\hspace{0.5em}}main.py}. Finally, your code needs to print the performance on the provided validation set once executed.
-\\\\答：执行完CNN\_main.py代码，将打印训练过程和测试性能结果，如下图\\
-		\begin{figure}[htbp]
-			\centering
-			\includegraphics[scale=0.5]{Output_3_1.png}
-			\caption{Output of Code CNN\_main.py}
-		\end{figure}
-
 		    \item[(2)] [10 pts] Use any type of CNNs as you want and draw graphs to show your network architecture in the submitted report. You are encouraged to try more architectures.
-\\\\答：本题采用的神经网络结构如下图\\
-		\begin{figure}[htbp]
-			\centering
-			\includegraphics[scale=0.5]{Architecture_3_2.png}
-			\caption{Nerual Network Architecture}
-		\end{figure}
-		    
 		    \item [(3)] [15 pts] During training, you may want to try some different optimization algorithms, such as SGD, Adam. Also, you need to study the effect of learning rate and the number of epoch, on the performance (accuracy).
- \\\\答：训练轮次epoch=7，每批次数目Batch size=30,SGD的学习速率lr=0.0001，动量momentum=0.9。此参数下测试总准确率accuracy为99\%\\
 		    \item [(4)] [10 pts] Plot graphs (learning curves) to demonstrate the change of training loss as well as the validation loss during training.
-\\答：loss曲线和前几问的具体细节写在报告report.pdf里\\
+\\\\答：本题具体的完成细节写在报告“report.pdf”里\\
 \end{enumerate}
 \end{document}

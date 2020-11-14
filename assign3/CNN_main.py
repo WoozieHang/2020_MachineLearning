@@ -4,21 +4,19 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from torch.autograd import Variable
-import hiddenlayer as h
-import torchviz
-from torchviz import make_dot
-from torchvision.models import AlexNet
-from tensorboardX import SummaryWriter
+import math
 
-BATCH_SIZE = 30
-EPOCH = 7
+BATCH_SIZE = 25
+MAX_EPOCH = 1000
+EPOCH=1
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0.5, 0.5)])
 train_set = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+#Split data set into training set and validation set
+train_set, val_set=torch.utils.data.random_split(train_set, [55000, 5000])
 train_loader = torch.utils.data.DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+val_loader= torch.utils.data.DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 test_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 test_loader = torch.utils.data.DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 classes = ('zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine')
@@ -73,12 +71,23 @@ net = Net().to(device)
 criterion = nn.CrossEntropyLoss()
 
 # two optimizer method SGD vs Adam
-#optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
-optimizer = optim.Adam(net.parameters())
+#optimizer = optim.SGD(net.parameters(), lr=0.01)
+optimizer = optim.Adam(net.parameters(),lr=0.001)
+
+
+
 
 #training
-for epoch in range(EPOCH):  # loop over the dataset multiple times
+
+#check for stop condition when state=3, and state increase 1 when loss increase, state zeros when loss decrease
+last_loss=9999
+state=0
+batch_num=math.ceil(55000/BATCH_SIZE)
+
+for epoch in range(MAX_EPOCH):  # loop over the dataset multiple times
+    print('epoch: %d' %(epoch + 1))
     running_loss = 0.0
+    count=0
     for i, data in enumerate(train_loader, 0):
         # get the inputs; data is a list of [inputs, labels]
         #inputs, labels = data
@@ -96,33 +105,67 @@ for epoch in range(EPOCH):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
-            print('[%d, %5d] loss: %.7f' %
-                  (epoch + 1, i + 1, running_loss / 2000))
-            running_loss = 0.0
+        count+=1
+        if  i%(round(batch_num/2))==0:
+            print('training progress: %d %%'% round(100*i/batch_num))
+    print('training progress: 100 %')
+    print('training loss: %.7f' %(running_loss / count))
+
+    PATH = './'+'epoch'+str(epoch+1)+'_net.pth'
+    torch.save(net.state_dict(), PATH)
+    net2 = Net()
+    net2.load_state_dict(torch.load(PATH))
+
+
+    correct = 0.0
+    total = 0.0
+    count = 0
+    v_loss=0.0
+    with torch.no_grad():
+        for data in val_loader:
+            images, labels = data
+            outputs = net2(images)
+            v_loss+=criterion(outputs, labels).item()
+            count+=1
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    print('validation loss: %.7f' % (v_loss/count))
+    print('Accuracy of the network on the 5000 validation images: %.7f %%' % (
+            100 * correct / total))
+
+    if last_loss>v_loss:
+        state=0
+    else:
+        state+=1
+    if state==2:
+        EPOCH=epoch-1
+        break
+    else:
+        last_loss = v_loss
 
 print('Finished Training')
-
-PATH = './mnist_net.pth'
-torch.save(net.state_dict(), PATH)
-
-
-data_iter = iter(test_loader)
-images, labels = data_iter.next()
+print(EPOCH)
+#data_iter = iter(test_loader)
+#images, labels = data_iter.next()
 #
 # # print images
 # imshow(torchvision.utils.make_grid(images,nrow=5))
 # print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(BATCH_SIZE)))
 #
-net = Net()
-net.load_state_dict(torch.load('./mnist_net.pth'))
-outputs = net(images)
-#
-# _, predicted = torch.max(outputs, 1)
-#
-# print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-#                               for j in range(BATCH_SIZE)))
 
+# testing
+PATH = './'+'epoch'+str(EPOCH)+'_net.pth'
+net = Net()
+net.load_state_dict(torch.load(PATH))
+# #outputs = net(images)
+# #
+# # _, predicted = torch.max(outputs, 1)
+# #
+# # print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
+# #                               for j in range(BATCH_SIZE)))
+#
 correct = 0
 total = 0
 loss=0.0
@@ -137,7 +180,6 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 10000 test images: %d %%' % (
     100 * correct / total))
-print('loss: %.7f' % (loss/total))
 
 class_correct = list(0. for i in range(10))
 class_total = list(0. for i in range(10))
