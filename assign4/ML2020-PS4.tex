@@ -41,7 +41,7 @@
     Now, we want to apply $k>0$ to the "penalty" of the examples that were split in the positive case for the examples with negative classification results (i.e., false positive). For such scenario,\\
    (1) [15pts] Please give the corresponding SVM optimization problem;\\
    (2) [15pts] Please give the corresponding dual problem and detailed derivation steps, especially such as KKT conditions.
-\\(1)解:\\由题意FP样本的惩罚量是原先的k倍，FN样本的惩罚量维持不变。不妨假设$y_1,y_2,\cdots,y_m=1$，且$y_{m+1},y_{m+2},\cdots,y_{m+n}=-1$。即m个正例和n个负例。那么相应的SVM优化问题为:
+\\(1)解:\\由题意，负样本违背约束的惩罚量是原先的k倍，正样本违背约束的惩罚量维持不变。不妨假设$y_1,y_2,\cdots,y_m=1$，且$y_{m+1},y_{m+2},\cdots,y_{m+n}=-1$。即m个正例和n个负例。那么相应的SVM优化问题为:
 \\
     \begin{equation}
     	\label{eq-svm-op}
@@ -49,7 +49,7 @@
     		\min_{\mathbf{w},b,\xi_i,\xi_j}& \quad \frac{1}{2} \lVert \mathbf{w} \rVert^2 + C_1\sum_{i=1}^m\xi_i + C_2\sum_{j=m+1}^{m+n}\xi_j\\
     		\text{s.t.}&  \quad y_p(\mathbf{w}^\mathrm{T}\mathbf{x}_p + b)\geq 1-\xi_p\\
     		& \quad \xi_p \geq 0, p = 1,2,\cdots,m,m+1,\cdots,m+n;\\
-			& \quad C_1=kC_2=kC;\\
+			& \quad kC_1=C_2=kC;\\
 			& \quad y_1,y_2,\cdots,y_m=+1;\\
 			& \quad y_{m+1},y_{m+2},\cdots,y_{m+n}=-1.\\
     	\end{split}
@@ -110,8 +110,8 @@
     	\begin{split}
 			\max_{\bm{\alpha}}& \quad \sum_{p=1}^{m+n}\alpha_p-\frac{1}{2}\sum_{p=1}^{m+n}\sum_{q=1}^{m+n}\alpha_p\alpha_qy_py_q\bm{x}_p^T\bm{x}_q\\
 \text{s.t.}& \quad \sum_{p=1}^{m+n}\alpha_py_p=0\\
-    		& \quad 0\leq\alpha_i\leq kC,\ i=1,2,\cdots,m\\
-			& \quad 0\leq\alpha_j\leq C, \ j=m+1,m+2,\cdots,m+n\\
+    		& \quad 0\leq\alpha_i\leq C,\ i=1,2,\cdots,m\\
+			& \quad 0\leq\alpha_j\leq kC, \ j=m+1,m+2,\cdots,m+n\\
     	\end{split}
 \end{equation}
 	\newpage
