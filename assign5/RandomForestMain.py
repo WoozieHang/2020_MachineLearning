@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from sklearn import preprocessing
 from sklearn import tree
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report,roc_auc_score,accuracy_score
 from sklearn.model_selection import train_test_split
 import math
@@ -38,70 +37,87 @@ def inputData(filePath):
 
 class RandomForestModel:
     def __init__(self):
+        # 初始化弱训练器列表
+        self.h = []
+        self.h_num = 0
+
         #初始化auc列表，用于5折交叉验证以保存输出综合结果
         self.aucList=[]
-        self.classifier=None
 
     def reStartMode(self):
-        self.classifier=None
+        # 初始化弱训练器列表
+        self.h = []
+        self.h_num = 0
 
     def train(self,trainingDataSet,validDataSet,Epoch,discount_id,have_valid):
         self.reStartMode()
-        # 初始化训练集
-        D = trainingDataSet.copy()
 
-        X = D.iloc[:, 0:13]
-        Y = D.iloc[:, 14]
+        # 初始化训练集
+        D0 = trainingDataSet.copy()
+
+        X = D0.iloc[:, 0:13]
+        Y = D0.iloc[:, 14]
 
         # 训练轮次T
         T = Epoch
+        sampleNum = len(D0)
 
-        # 使用验证集
-        if have_valid==True:
-            #第t轮对应5t+1个树组成森林的情况
-            for t in range(0, T):
-                # 有放回采样（行差异）+属性选择（列差异）+并行化
-                self.classifier = RandomForestClassifier(criterion="entropy", max_features='log2', bootstrap=True,
-                                                         n_jobs=-1, n_estimators=5*t+1)
+        # T轮循环
+        for t in range(0, T):
+            # bootstrap
+            D = D0.sample(n=sampleNum, replace=True)
+            D.reset_index(drop=True, inplace=True)
+            X = D.iloc[:, 0:13]
+            Y = D.iloc[:, 14]
 
-                self.classifier.fit(X, Y)
-                e = 1 - self.classifier.score(X, Y)
+            # 训练弱训练器:随机决策树
+            self.h.append(tree.DecisionTreeClassifier(criterion="entropy",max_features='log2'))
+            self.h[t].fit(X, Y)
+            # 训练损失
+            e = 1 - self.h[t].score(X, Y)
+
+
+            #使用验证集
+            if have_valid==True:
                 accur, auc = self.test(validDataSet)
                 print("交叉验证进度:", str(discount_id) + "/5",
-                      "   随机森林树数目:", str(5*t+1) + "/" + str(5 * T -4),
-                      "  "+str(5*t+1) + "个树集成森林后训练集准确率：", 1 - e,
-                      "  "+str(5*t+1) + "个树集成森林后验证集准确率：", accur,
-                      "  "+str(5*t+1) + "个树集成森林后验证集auc-score:", auc)
+                      "   训练轮次:", str(1 + t) + "/" + str(T),
+                      "   第" + str(1 + t) + "轮弱学习器训练集准确率：", 1 - e,
+                      "   前" + str(1 + t) + "轮集成后验证集准确率：", accur,
+                      "   前" + str(1 + t) + "轮集成后验证集auc-score:", auc)
 
                 if t == len(self.aucList):
                     self.aucList.append(auc)
                 else:
                     self.aucList[t] += auc
+            else:
+                accur, auc = self.test(validDataSet)
+                print("用全部训练集进行正式训练",
+                      "   训练轮次:", str(1 + t) + "/" + str(T),
+                      "   第" + str(1 + t) + "轮弱学习器训练集准确率：", 1 - e,
+                      "   前" + str(1 + t) + "轮集成后测试集准确率：", accur,
+                      "   前" + str(1 + t) + "轮集成后测试集auc-score:", auc)
+
 
         #使用测试集
-        else:
-            # 有放回采样（行差异）+属性选择（列差异）+并行化
-            self.classifier = RandomForestClassifier(criterion="entropy", max_features='log2', bootstrap=True,
-                                                     n_jobs=-1, n_estimators=5 * T +1)
-
-            self.classifier.fit(X, Y)
-            e = 1 - self.classifier.score(X, Y)
+        if have_valid==False:
             accur, auc = self.test(validDataSet)
-            print("用全部训练集进行正式训练",
-                  "   随机森林树数目:", str(5 * T +1) ,
-                  "  "+str(5 * T +1) + "个树集成森林后训练集准确率：", 1 - e,
-                  "  "+str(5 * T +1) + "个树集成森林后测试集准确率：", accur,
-                  "  "+str(5 * T +1) + "个树集成森林后测试集auc-score:", auc)
-
-
+            print("测试集准确率:",accur,"测试集auc:",auc)
 
     def test(self,testDataSet):
+        self.h_num = len(self.h)
+
         # 读入测试数据
         X_test = testDataSet.iloc[:, 0:13]
         Y_test = testDataSet.iloc[:, 14]
 
         # 预测
-        Y_pred = self.classifier.predict(X_test)
+        Y_pred = self.h[0].predict(X_test)
+        for i in range(1, self.h_num):
+            Y_pred = Y_pred + self.h[i].predict(X_test)
+
+        for i in range(0, len(Y_pred)):
+             Y_pred[i]=round(Y_pred[i]/self.h_num)
 
         # print(Y_pred)
         # 测试报告
@@ -127,18 +143,18 @@ class RandomForestModel:
                 max_id=i
                 max=self.aucList[i]
 
-        print("经过五折交叉验证, auc最佳时随机森林树的数目设置为",5*max_id+1,"  auc大小为",max)
+        print("经过五折交叉验证, auc最佳的训练轮次设置为",max_id+1,"  auc大小为",max)
 
         # #epoch-auc 图像显示
-        # xValue = [5*i-4 for i in range(1,len(self.aucList)+1)]
+        # xValue = [i for i in range(1,len(self.aucList)+1)]
         # yValue = self.aucList.copy()
         #
-        # z1 = np.polyfit(xValue, yValue, 29)  # 用4次多项式拟合
+        # z1 = np.polyfit(xValue, yValue, 11)  # 用4次多项式拟合
         # p1 = np.poly1d(z1)
         #
         # y_vals = p1(xValue)  # 也可以使用yvals=np.polyval(z1,x)
         #
-        # plt.title(u'Validation AUC-SCORES vs Base Learner Number for Random Forest', FontProperties=font)
+        # plt.title(u'Validation AUC-SCORES vs Base Learner Number for RandomForest', FontProperties=font)
         #
         # plt.xlabel('epochs')
         # plt.ylabel('AUC-SCORES')
@@ -155,7 +171,7 @@ class RandomForestModel:
         # # plt.scatter(xValue, yValue, s=20, c="#ff1212", marker='o')
         # plt.show()
 
-        return max_id
+        return max_id+1
 
 
 #主程序开始位置
@@ -177,8 +193,8 @@ testDataSet=inputData('./adult.test')
 #   方案3：丢弃原先测试集，在自带的训练集中划分四分之一作为测试集，剩余的四分之三作为新的训练集。此乃最终方案
 trainingDataSet, testDataSet = train_test_split(trainingDataSet,test_size=0.25,random_state=42)
 
-#设置超参数轮次,轮数[0 to epoch-1]，第i轮的森林有5*i+1个树
-epoch=20
+#设置超参数轮次
+epoch=100
 
 #划分验证集5个
 validDataSet1,validDataSet2=train_test_split(trainingDataSet,test_size=0.2,random_state=42)
@@ -209,15 +225,15 @@ validDataSet5.reset_index(drop=True, inplace=True)
 
 testDataSet.reset_index(drop=True,inplace=True)
 
-rfm=RandomForestModel()
+abm=RandomForestModel()
 
 #五折交叉验证
-rfm.train(trainingDataSet1,validDataSet1,epoch,1,True)
-rfm.train(trainingDataSet2, validDataSet2,epoch,2,True)
-rfm.train(trainingDataSet3, validDataSet3,epoch,3,True)
-rfm.train(trainingDataSet4, validDataSet4,epoch,4,True)
-rfm.train(trainingDataSet5, validDataSet5,epoch,5,True)
-BestEpoch=rfm.ouputBestEpochByAuc(5)
+abm.train(trainingDataSet1,validDataSet1,epoch,1,True)
+abm.train(trainingDataSet2, validDataSet2,epoch,2,True)
+abm.train(trainingDataSet3, validDataSet3,epoch,3,True)
+abm.train(trainingDataSet4, validDataSet4,epoch,4,True)
+abm.train(trainingDataSet5, validDataSet5,epoch,5,True)
+BestEpoch=abm.ouputBestEpochByAuc(5)
 
 #训练并输出测试结果
-rfm.train(trainingDataSet,testDataSet,BestEpoch,0,False)
+abm.train(trainingDataSet,testDataSet,BestEpoch,0,False)

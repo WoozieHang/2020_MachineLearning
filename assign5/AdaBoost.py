@@ -105,9 +105,9 @@ class AdaBoostModel:
             # 更新样本weight
             for i in range(0, sampleNum):
                 if y_pred[i] == Y[i]:
-                    weight[i] = weight[i] / math.exp(self.alpha[t])
+                    weight[i] = 1 / math.exp(self.alpha[t])
                 else:
-                    weight[i] = weight[i] * math.exp(self.alpha[t])
+                    weight[i] = 1 * math.exp(self.alpha[t])
 
 
             # 8.3算法第七行：生成新分布
